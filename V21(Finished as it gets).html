@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ORACLE // DUAL_WORLD_SYSTEM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --neon: #00fff2; --oracle: #a855f7; --alert: #ff0044; }
+        body { font-family: 'JetBrains Mono', monospace; background-color: #010204; color: var(--neon); margin: 0; overflow: hidden; height: 100vh; }
+        .panel { background: rgba(5, 10, 20, 0.98); border: 1px solid rgba(0, 255, 242, 0.1); height: 100%; display: flex; flex-direction: column; position: relative; }
+        
+        /* Secondary World Styling */
+        .world-2 { background-color: #1a0505 !important; color: #ff3333 !important; border-color: #ff3333 !important; }
+        .world-2 .slider::-webkit-slider-thumb { background: #ff3333 !important; box-shadow: 0 0 15px #ff3333 !important; }
+        .world-2 #action-btn { border-color: #ff3333 !important; color: #ff3333 !important; }
+        .world-2 #action-btn:hover { background: #ff3333 !important; color: black !important; }
+
+        /* Overlays */
+        #auth-overlay, #failover-screen { position: fixed; inset: 0; z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #000; }
+        .name-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 20px; }
+        .name-btn { background: transparent; border: 1px solid var(--neon); padding: 8px; color: var(--neon); cursor: pointer; transition: 0.2s; font-size: 10px; width: 140px; }
+        .name-btn:hover { background: var(--neon); color: #000; box-shadow: 0 0 15px var(--neon); }
+
+        #oracle-log { flex: 1; overflow-y: auto; scroll-behavior: smooth; }
+        .mission-fact { background: rgba(255, 255, 255, 0.05); border-left: 4px solid var(--oracle); padding: 10px; margin: 10px 0; font-size: 10px; }
+        
+        .slider { -webkit-appearance: none; width: 100%; height: 2px; background: #222; outline: none; }
+        .slider::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; background: var(--neon); cursor: pointer; border-radius: 50%; box-shadow: 0 0 15px var(--neon); }
+        
+        /* Glitch Animation */
+        .glitch { animation: glitch-anim 0.2s infinite; }
+        @keyframes glitch-anim {
+            0% { transform: translate(0); }
+            20% { transform: translate(-5px, 5px); }
+            40% { transform: translate(-5px, -5px); }
+            60% { transform: translate(5px, 5px); }
+            80% { transform: translate(5px, -5px); }
+            100% { transform: translate(0); }
+        }
+    </style>
+</head>
+<body class="p-6" id="main-body">
+
+    <div id="auth-overlay">
+        <h1 class="text-3xl font-black mb-2 tracking-tighter" style="font-family: Orbitron">SELECT OPERATOR</h1>
+        <div id="name-list" class="name-grid"></div>
+    </div>
+
+    <div id="failover-screen" style="display:none;">
+        <h1 id="fail-title" class="text-4xl font-bold mb-4 text-red-600">CRITICAL FAILURE</h1>
+        <p id="fail-sub" class="mb-8 opacity-70">GENERATING EMERGENCY WORLD_02...</p>
+        <div class="w-64 h-2 bg-white/10 rounded-full overflow-hidden">
+            <div id="failover-bar" class="h-full bg-red-600 w-0"></div>
+        </div>
+    </div>
+
+    <header class="h-[80px] flex justify-between items-end border-b border-cyan-900 pb-4 mb-6" id="header-ui">
+        <div>
+            <h1 id="brand" class="text-3xl font-black tracking-tighter" style="font-family:'Orbitron'">ORACLE_V21</h1>
+            <p id="operator-tag" class="text-[9px] text-purple-400 uppercase tracking-[4px]">Awaiting Auth...</p>
+        </div>
+        <div class="flex gap-10 items-center">
+            <button onclick="initWorldTwo()" class="text-red-500 border border-red-500 text-[9px] px-2 py-1 hover:bg-red-500 hover:text-white transition">FORCE_FAILOVER</button>
+            <div id="fail-tracker" class="text-[10px] text-red-500 font-bold uppercase">Sector Mistakes: 0/5</div>
+        </div>
+    </header>
+
+    <div class="flex gap-6 h-[calc(100vh-140px)]" id="game-ui">
+        <div class="w-2/3 panel p-8" id="left-panel">
+            <div id="visual-area" class="flex-1 flex items-center justify-center relative mb-4">
+                <div id="main-icon" class="text-9xl opacity-10 animate-pulse">📡</div>
+            </div>
+            <div class="h-[180px] flex flex-col justify-center space-y-6 border-t border-white/5 pt-4">
+                <div id="freq-display" class="text-7xl font-bold tracking-tighter text-center">5000</div>
+                <input type="range" id="freq-slider" min="100" max="50000" value="5000" class="slider">
+                <button id="action-btn" class="w-full py-4 border border-cyan-500 font-bold hover:bg-cyan-400 hover:text-black transition-all uppercase tracking-widest text-xs">Verify Resonance</button>
+            </div>
+        </div>
+
+        <aside class="w-1/3 panel p-8 border-l border-purple-900/40 bg-black/60" id="right-panel">
+            <div class="h-[120px] shrink-0">
+                <h3 id="mission-title" class="text-lg font-bold text-white uppercase mb-1">---</h3>
+                <div id="mission-purpose" class="text-[10px] text-purple-200/50 italic leading-snug">...</div>
+            </div>
+            <div id="oracle-log" class="mt-4 border-t border-white/10 pt-4 text-[10px] space-y-2 opacity-80 overflow-y-auto"></div>
+        </aside>
+    </div>
+
+    <script>
+        const students = ["Sherwin", "Ashwin", "Vincy", "Jase", "Arvind", "Prayaagraj", "Abhinav", "Dhruv", "Sanvi", "Aradhita", "Anvita", "Chehek", "Atul", "Arshia", "Dehaan", "Nadish", "Sushrain", "Bhakti", "Hetal", "Savika", "Nenashri", "Vedant", "Parth"];
+        let activeUser = "";
+        let currentStage = 0;
+        let sectorFails = 0;
+        let isWorldTwo = false;
+
+        const worldOneStages = [
+            { title: "Cardiac Imaging", target: 14200, info: "HOW: Ultrasound reflections. WHERE: Medical heart scans." },
+            { title: "Oil Exploration", target: 3100, info: "HOW: Seismic waves. WHERE: Finding underground oil." }
+        ];
+
+        const worldTwoStages = [
+            { title: "Black-Site Encryption", target: 48900, info: "HOW: Quantum vibration sync. WHERE: Top-secret military communication." }
+        ];
+
+        let currentWorldStages = worldOneStages;
+
+        // Init Names
+        const nameList = document.getElementById('name-list');
+        students.sort().forEach(name => {
+            const btn = document.createElement('button');
+            btn.className = "name-btn";
+            btn.innerText = name;
+            btn.onclick = () => {
+                activeUser = name;
+                document.getElementById('auth-overlay').style.display = 'none';
+                document.getElementById('operator-tag').innerText = `Operator: ${name}`;
+                addLog(`Oracle v21 Online. Welcome ${name}.`);
+                updateStage();
+            };
+            nameList.appendChild(btn);
+        });
+
+        function addLog(text, color = 'text-purple-400') {
+            const div = document.createElement('div');
+            div.className = `p-2 border-b border-white/5 ${color}`;
+            div.innerHTML = `> ${text}`;
+            document.getElementById('oracle-log').prepend(div);
+        }
+
+        function updateStage() {
+            const s = currentWorldStages[currentStage];
+            if(!s) {
+                if(!isWorldTwo) initWorldTwo(); 
+                else addLog(`FINAL CLEARANCE GRANTED, ${activeUser}.`);
+                return;
+            }
+            sectorFails = 0;
+            document.getElementById('fail-tracker').innerText = `Sector Mistakes: 0/5`;
+            document.getElementById('mission-title').innerText = s.title;
+            document.getElementById('mission-purpose').innerText = `Analyzing resonance for ${s.title}...`;
+        }
+
+        document.getElementById('action-btn').onclick = () => {
+            const val = document.getElementById('freq-slider').value;
+            const target = currentWorldStages[currentStage].target;
+            
+            if (Math.abs(val - target) < 400) {
+                addLog(`CORRECT!`, "text-green-400");
+                addLog(`<div class="mission-fact">${currentWorldStages[currentStage].info}</div>`);
+                currentStage++;
+                setTimeout(updateStage, 1500);
+            } else {
+                sectorFails++;
+                document.getElementById('fail-tracker').innerText = `Sector Mistakes: ${sectorFails}/5`;
+                if (sectorFails >= 5) {
+                    addLog(`[AUTO-FAIL] Taking control.`, "text-red-500 font-bold");
+                    addLog(`<div class="mission-fact">${currentWorldStages[currentStage].info}</div>`);
+                    currentStage++;
+                    setTimeout(updateStage, 1500);
+                } else {
+                    addLog(`Wrong, ${activeUser}. Try again.`);
+                }
+            }
+        };
+
+        function initWorldTwo() {
+            document.getElementById('failover-screen').style.display = 'flex';
+            document.body.classList.add('glitch');
+            
+            let p = 0;
+            const interval = setInterval(() => {
+                p += 5;
+                document.getElementById('failover-bar').style.width = p + '%';
+                if (p >= 100) {
+                    clearInterval(interval);
+                    document.body.classList.remove('glitch');
+                    applyWorldTwo();
+                }
+            }, 50);
+        }
+
+        function applyWorldTwo() {
+            isWorldTwo = true;
+            currentStage = 0;
+            currentWorldStages = worldTwoStages;
+            
+            // Visual Swap
+            document.getElementById('failover-screen').style.display = 'none';
+            document.getElementById('main-body').classList.add('world-2');
+            document.getElementById('left-panel').classList.add('world-2');
+            document.getElementById('right-panel').classList.add('world-2');
+            document.getElementById('brand').innerText = "WORLD_02 // RED_ZONE";
+            document.getElementById('main-icon').innerText = "☣";
+            
+            addLog(`EMERGENCY WORLD GENERATED. Welcome to the Red Zone, ${activeUser}.`, "text-red-500 font-bold text-lg");
+            updateStage();
+        }
+
+        document.getElementById('freq-slider').oninput = (e) => {
+            document.getElementById('freq-display').innerText = e.target.value;
+        };
+    </script>
+</body>
+</html>
